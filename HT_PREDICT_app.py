@@ -222,22 +222,39 @@ if files_option == 'SMILES':
 
 if files_option == '*CSV file containing SMILES':
      
-    # Read SMILES input
+    # Read input
     uploaded_file = st.file_uploader('The file should contain only one column with the name "SMILES"')
     if uploaded_file is not None:
         df_ws=pd.read_csv(uploaded_file, sep=';')
         count=0
-        for i in df_ws.SMILES:            
+        failed_mols = []
+        bad_index=[]
+        index=0
+        for i in df_ws.SMILES: 
+            index+=1           
             try:
                 canon_smi = Chem.MolToSmiles(Chem.MolFromSmiles(i),isomericSmiles = False)
                 df_ws.SMILES = df_ws.SMILES.replace (i, canon_smi)             
             except:
+                failed_mols.append(i)
+                bad_index.append(index)
                 canon_smi='wrong_smiles'
                 count+=1
                 df_ws.SMILES = df_ws.SMILES.replace (i, canon_smi)
         st.header('CHEMICAL STRUCTURE VALIDATION AND STANDARDIZATION:')
         st.write(f'Original data: {len(df_ws)} molecules')
         st.write(f'Failed data: {count} molecules')
+
+        if len(failed_mols)!=0:
+            number =[]
+            for i in range(len(failed_mols)):
+                number.append(str(i+1))
+            
+            
+            bad_molecules = pd.DataFrame({'No. failed molecule in original set': bad_index, 'SMILES of wrong structure: ': failed_mols, 'No.': number}, index=None)
+            bad_molecules = bad_molecules.set_index('No.')
+            st.dataframe(bad_molecules)
+
 
         moldf = []
         for i,record in enumerate(df_ws.SMILES):
@@ -263,10 +280,9 @@ if files_option == '*CSV file containing SMILES':
             cas_id=[]
             y_pred_con_tox=[]
             cpd_AD_vs_tox=[]
-            for i in df_ws.SMILES:
-                i=standardize_smiles(i)
-                m = Chem.MolFromSmiles(i)
+            for m in moldf:
                 inchi = str(Chem.MolToInchi(m))
+                i=Chem.MolToSmiles(m)
                 struct.append(i)
                 if inchi in res:
                     exp.append(round((res[inchi][0]['pchembl_value_mean']), 2))
@@ -308,7 +324,7 @@ if files_option == '*CSV file containing SMILES':
                     cpd_AD_vs_tox.append('-')
                     
                 else:
-                    m_t = Chem.MolFromSmiles(i)
+                    m_t = m
                     # Calculate molecular descriptors
                     f_vs_tox = [AllChem.GetMorganFingerprintAsBitVect(m_t, radius=2, nBits=1024, useFeatures=False, useChirality=False)]
                     X_tox = rdkit_numpy_convert(f_vs_tox)
@@ -324,7 +340,7 @@ if files_option == '*CSV file containing SMILES':
                     prediction_SVM_tox = load_model_SVM_tox.predict(X_tox)
                     prediction_GBR_tox = load_model_GBR_tox.predict(X_tox)
                     y_pred_tox=(prediction_SVM_tox+prediction_GBR_tox)/2                            
-                    MolWt=ExactMolWt(Chem.MolFromSmiles(i))
+                    MolWt=ExactMolWt(m_t)
                     value_ped_tox=(10**(y_pred_tox*-1)*1000)*MolWt
                     value_ped_tox=round(value_ped_tox[0], 4)
                     y_pred_con_tox.append(value_ped_tox)
