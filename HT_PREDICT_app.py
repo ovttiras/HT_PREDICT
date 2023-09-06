@@ -71,14 +71,14 @@ st.markdown(page_bg_img, unsafe_allow_html=True)
 st.write("<h1 style='text-align: center; color: #00008B;'> HT_PREDICT</h1>", unsafe_allow_html=True)
 st.write("<h3 style='text-align: center; color: black;'> ONLINE HDAC6 ACTIVITY AND ACUTE TOXICITY PREDICTIONS BY QSAR MODELS.</h1>", unsafe_allow_html=True)
 if st.sidebar.button('Application description'):
-    st.sidebar.write('The HT_PREDICT application provides an alternative method for assessing the potential of chemicals to be Histone deacetylas 6 (HDAC2) inhibitors. The application also allows to predict the level of toxicity (rat, oral, LD50) of the studied compounds.  This application makes predictions based on Quantitative Structure-Activity Relationship (QSAR) models build on curated datasets. If experimental activity or toxicity values are available for the compound, they are displayed in the summary table. The  models were developed using open-source chemical descriptors based on Morgan fingerprints, along with the Gradient Boosting, Support Vector Machines  algorithms, using Python. The models were generated applying the best practices for QSAR model development and validation widely accepted by the community. The applicability domain (AD) of the models was calculated as Dcutoff = ⟨D⟩ + Zs, where «Z» is a similarity threshold parameter defined by a user (0.5 in this study) and «⟨D⟩» and «s» are the average and standard deviation, respectively, of all Euclidian distances in the multidimensional descriptor space between each compound and its nearest neighbors for all compounds in the training set. Batch processing is available through https://github.com/ovttiras/HDAC2_inhibitors.')
+    st.sidebar.write('The HT_PREDICT application provides an alternative method for assessing the potential of chemicals to be Histone deacetylas 6 (HDAC6) inhibitors. The application also allows to predict the level of toxicity (rat, oral, LD50) of the studied compounds.  This application makes predictions based on Quantitative Structure-Activity Relationship (QSAR) models build on curated datasets. If experimental activity or toxicity values are available for the compound, they are displayed in the summary table. The  models were developed using open-source chemical descriptors based on Morgan fingerprints, along with the Gradient Boosting, Support Vector Machines  algorithms, using Python. The models were generated applying the best practices for QSAR model development and validation widely accepted by the community. The applicability domain (AD) of the models was calculated as Dcutoff = ⟨D⟩ + Zs, where «Z» is a similarity threshold parameter defined by a user (0.5 in this study) and «⟨D⟩» and «s» are the average and standard deviation, respectively, of all Euclidian distances in the multidimensional descriptor space between each compound and its nearest neighbors for all compounds in the training set. Batch processing is available through https://github.com/ovttiras/HT_PREDICT/tree/main.')
 
 
 with open("manual.pdf", "rb") as file:
     btn=st.sidebar.download_button(
     label="Click to download brief manual",
     data=file,
-    file_name="manual of HDAC2 SCAN.pdf",
+    file_name="manual of HT_PREDICT.pdf",
     mime="application/octet-stream"
 )
 
