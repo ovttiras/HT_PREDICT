@@ -106,7 +106,7 @@ def rdkit_numpy_convert(f_vs):
         return np.asarray(output) 
 
 # LOAD MODELS
-# HDAC2 activity models
+# HDAC3 activity models
 with zipfile.ZipFile('Models/HDAC6_SVM_MF.zip', 'r') as zip_file_svm:
     zf_svm=zip_file_svm.extract('HDAC6_SVM_MF.pkl', '.')
 load_model_SVM=pickle.load(open(zf_svm,'rb'))
@@ -116,12 +116,12 @@ with zipfile.ZipFile('Models/HDAC6_GBR_MF.zip', 'r') as zip_file_gbr:
 load_model_GBR=pickle.load(open(zf_gbr,'rb'))
 
 # Toxicity models
-with zipfile.ZipFile('Models/Toxicity/LD50_rat_oral_SVM_MF.zip', 'r') as zip_file_svm_tox:
-    zf_tox=zip_file_svm_tox.extract('LD50_rat_oral_SVM_MF.pkl', '.')
+with zipfile.ZipFile('Models/Toxicity/Toxicity_SVM_RDKiT.zip', 'r') as zip_file_svm_tox:
+    zf_tox=zip_file_svm_tox.extract('Toxicity_SVM_RDKiT.pkl', '.')
 load_model_SVM_tox=pickle.load(open(zf_tox,'rb'))
 
-with zipfile.ZipFile('Models/Toxicity/LD50_rat_oral_GBR_MFP.zip', 'r') as zip_file_gbr_tox:
-    zf_tox_gbr=zip_file_gbr_tox.extract('LD50_rat_oral_GBR_MFP.pkl', '.')
+with zipfile.ZipFile('Models/Toxicity/Toxicity_GBR_RDKiT.zip', 'r') as zip_file_gbr_tox:
+    zf_tox_gbr=zip_file_gbr_tox.extract('Toxicity_GBR_RDKiT.pkl', '.')
 load_model_GBR_tox=pickle.load(open(zf_tox_gbr,'rb'))
 
 # load numpy array from csv file for hdac activity
@@ -134,7 +134,7 @@ model_AD_limit = 4.28
 zf = zipfile.ZipFile('Models/Toxicity/x_tr_rat_oral.zip') 
 df_tox = pd.read_csv(zf.open('x_tr_rat_oral.csv'))
 x_tr_tox=df_tox.to_numpy()
-model_AD_limit_tox = 4.25
+model_AD_limit_tox = 6.57
 
 files_option = st.selectbox('Select input molecular files', ('SMILES', '*CSV file containing SMILES', 'MDL multiple SD file (*.sdf)'))
 
@@ -154,6 +154,22 @@ if files_option == 'SMILES':
         # Calculate molecular descriptors
         f_vs = [AllChem.GetMorganFingerprintAsBitVect(m, radius=2, nBits=1024, useFeatures=False, useChirality=False)]
         X = rdkit_numpy_convert(f_vs)
+        # Calculate RDKIT
+        calc = MoleculeDescriptors.MolecularDescriptorCalculator([x[0] for x in Descriptors._descList])
+        header = calc.GetDescriptorNames()
+        descr_tr= []
+        descr_tr.append(calc.CalcDescriptors(m))
+        x_tr_rdkit = np.asarray(descr_tr)
+        df_RDKit_2D = pd.DataFrame(x_tr_rdkit,columns=header)
+        df_RDKit_2D=df_RDKit_2D.drop(['BCUT2D_MWLOW','MaxPartialCharge', 'BCUT2D_CHGLO', 'BCUT2D_CHGHI',
+                                      'BCUT2D_MRHI','BCUT2D_MWHI','BCUT2D_MRLOW','MinAbsPartialCharge',
+                                       'MaxAbsPartialCharge','BCUT2D_LOGPLOW','MinPartialCharge', 'BCUT2D_LOGPHI'], axis=1)
+        x_tr_rdkit= df_RDKit_2D.to_numpy()
+        # Data Standardization
+        from sklearn.preprocessing import StandardScaler
+        scale = StandardScaler().fit( x_tr_rdkit)
+        x_tr_rdkit = scale.transform( x_tr_rdkit)     
+
         # HDAC activity
         # search experimental value
         if inchi in res:
@@ -194,14 +210,14 @@ if files_option == 'SMILES':
             
         else:
              #Predict toxicity
-            prediction_SVM_tox = load_model_SVM_tox.predict(X)
-            prediction_GBR_tox = load_model_GBR_tox.predict(X)
+            prediction_SVM_tox = load_model_SVM_tox.predict(x_tr_rdkit)
+            prediction_GBR_tox = load_model_GBR_tox.predict(x_tr_rdkit)
             y_pred_con_tox=(prediction_SVM_tox+prediction_GBR_tox)/2
             y_pred_con_tox_t=y_pred_con_tox[0]
             MolWt=ExactMolWt(Chem.MolFromSmiles(smiles))
             value_ped_tox=str(round((10**(y_pred_con_tox_t*-1)*1000)*MolWt, 4))
              # Estimination AD for toxicity
-            neighbors_k_vs_tox = pairwise_distances(x_tr_tox, Y=X, n_jobs=-1)
+            neighbors_k_vs_tox = pairwise_distances(x_tr_tox, Y=x_tr_rdkit, n_jobs=-1)
             neighbors_k_vs_tox.sort(0)
             similarity_vs_tox = neighbors_k_vs_tox
             cpd_value_vs_tox = similarity_vs_tox[0, :]
@@ -325,11 +341,23 @@ if files_option == '*CSV file containing SMILES':
                     
                 else:
                     m_t = m
-                    # Calculate molecular descriptors
-                    f_vs_tox = [AllChem.GetMorganFingerprintAsBitVect(m_t, radius=2, nBits=1024, useFeatures=False, useChirality=False)]
-                    X_tox = rdkit_numpy_convert(f_vs_tox)
+                    # Calculate RDKIT
+                    calc = MoleculeDescriptors.MolecularDescriptorCalculator([x[0] for x in Descriptors._descList])
+                    header = calc.GetDescriptorNames()
+                    descr_tr= []
+                    descr_tr.append(calc.CalcDescriptors(m_t))
+                    x_tr_rdkit = np.asarray(descr_tr)
+                    df_RDKit_2D = pd.DataFrame(x_tr_rdkit,columns=header)
+                    df_RDKit_2D=df_RDKit_2D.drop(['BCUT2D_MWLOW','MaxPartialCharge', 'BCUT2D_CHGLO', 'BCUT2D_CHGHI',
+                                                'BCUT2D_MRHI','BCUT2D_MWHI','BCUT2D_MRLOW','MinAbsPartialCharge',
+                                                'MaxAbsPartialCharge','BCUT2D_LOGPLOW','MinPartialCharge', 'BCUT2D_LOGPHI'], axis=1)
+                    x_tr_rdkit= df_RDKit_2D.to_numpy()
+                    # Data Standardization
+                    from sklearn.preprocessing import StandardScaler
+                    scale = StandardScaler().fit( x_tr_rdkit)
+                    x_tr_rdkit = scale.transform( x_tr_rdkit)
                     # Estimination AD for toxicity
-                    neighbors_k_vs_tox = pairwise_distances(x_tr_tox, Y=f_vs_tox, n_jobs=-1)
+                    neighbors_k_vs_tox = pairwise_distances(x_tr_tox, Y=x_tr_rdkit, n_jobs=-1)
                     neighbors_k_vs_tox.sort(0)
                     similarity_vs_tox = neighbors_k_vs_tox
                     cpd_value_vs_tox = similarity_vs_tox[0, :]
@@ -337,8 +365,8 @@ if files_option == '*CSV file containing SMILES':
 
                     # calculate toxicity  
 
-                    prediction_SVM_tox = load_model_SVM_tox.predict(X_tox)
-                    prediction_GBR_tox = load_model_GBR_tox.predict(X_tox)
+                    prediction_SVM_tox = load_model_SVM_tox.predict(x_tr_rdkit)
+                    prediction_GBR_tox = load_model_GBR_tox.predict(x_tr_rdkit)
                     y_pred_tox=(prediction_SVM_tox+prediction_GBR_tox)/2                            
                     MolWt=ExactMolWt(m_t)
                     value_ped_tox=(10**(y_pred_tox*-1)*1000)*MolWt
@@ -486,17 +514,29 @@ if files_option == 'MDL multiple SD file (*.sdf)':
                     
                 else:
                     m_t = Chem.MolFromSmiles(i)
-                    # Calculate molecular descriptors
-                    f_vs_tox = [AllChem.GetMorganFingerprintAsBitVect(m_t, radius=2, nBits=1024, useFeatures=False, useChirality=False)]
-                    X_tox = rdkit_numpy_convert(f_vs_tox)
+                    # Calculate RDKIT
+                    calc = MoleculeDescriptors.MolecularDescriptorCalculator([x[0] for x in Descriptors._descList])
+                    header = calc.GetDescriptorNames()
+                    descr_tr= []
+                    descr_tr.append(calc.CalcDescriptors(m_t))
+                    x_tr_rdkit = np.asarray(descr_tr)
+                    df_RDKit_2D = pd.DataFrame(x_tr_rdkit,columns=header)
+                    df_RDKit_2D=df_RDKit_2D.drop(['BCUT2D_MWLOW','MaxPartialCharge', 'BCUT2D_CHGLO', 'BCUT2D_CHGHI',
+                                                'BCUT2D_MRHI','BCUT2D_MWHI','BCUT2D_MRLOW','MinAbsPartialCharge',
+                                                'MaxAbsPartialCharge','BCUT2D_LOGPLOW','MinPartialCharge', 'BCUT2D_LOGPHI'], axis=1)
+                    x_tr_rdkit= df_RDKit_2D.to_numpy()
+                    # Data Standardization
+                    from sklearn.preprocessing import StandardScaler
+                    scale = StandardScaler().fit( x_tr_rdkit)
+                    x_tr_rdkit = scale.transform( x_tr_rdkit)
                     # Estimination AD for toxicity
-                    neighbors_k_vs_tox = pairwise_distances(x_tr_tox, Y=f_vs_tox, n_jobs=-1)
+                    neighbors_k_vs_tox = pairwise_distances(x_tr_tox, Y=x_tr_rdkit, n_jobs=-1)
                     neighbors_k_vs_tox.sort(0)
                     similarity_vs_tox = neighbors_k_vs_tox
                     cpd_value_vs_tox = similarity_vs_tox[0, :]
                     cpd_AD_vs_tox_r = np.where(cpd_value_vs_tox <= model_AD_limit_tox, "Inside AD", "Outside AD")
-                    prediction_SVM_tox = load_model_SVM_tox.predict(X_tox)
-                    prediction_GBR_tox = load_model_GBR_tox.predict(X_tox)
+                    prediction_SVM_tox = load_model_SVM_tox.predict(x_tr_rdkit)
+                    prediction_GBR_tox = load_model_GBR_tox.predict(x_tr_rdkit)
                     y_pred_tox=(prediction_SVM_tox+prediction_GBR_tox)/2
                     
                     MolWt=ExactMolWt(Chem.MolFromSmiles(i))
