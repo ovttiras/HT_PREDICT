@@ -163,12 +163,12 @@ if files_option == 'SMILES':
         df_RDKit_2D = pd.DataFrame(x_tr_rdkit,columns=header)
         df_RDKit_2D=df_RDKit_2D.drop(['BCUT2D_MWLOW','MaxPartialCharge', 'BCUT2D_CHGLO', 'BCUT2D_CHGHI',
                                       'BCUT2D_MRHI','BCUT2D_MWHI','BCUT2D_MRLOW','MinAbsPartialCharge',
-                                       'MaxAbsPartialCharge','BCUT2D_LOGPLOW','MinPartialCharge', 'BCUT2D_LOGPHI'], axis=1)
+                                       'MaxAbsPartialCharge','BCUT2D_LOGPLOW', 'BCUT2D_LOGPHI'], axis=1)
         x_tr_rdkit= df_RDKit_2D.to_numpy()
         # Data Standardization
         from sklearn.preprocessing import StandardScaler
-        scale = StandardScaler().fit( x_tr_rdkit)
-        x_tr_rdkit = scale.transform( x_tr_rdkit)     
+        scale = StandardScaler().fit(x_tr_rdkit)
+        x_tr_rdkit = scale.transform(x_tr_rdkit)     
 
         # HDAC activity
         # search experimental value
@@ -350,7 +350,7 @@ if files_option == '*CSV file containing SMILES':
                     df_RDKit_2D = pd.DataFrame(x_tr_rdkit,columns=header)
                     df_RDKit_2D=df_RDKit_2D.drop(['BCUT2D_MWLOW','MaxPartialCharge', 'BCUT2D_CHGLO', 'BCUT2D_CHGHI',
                                                 'BCUT2D_MRHI','BCUT2D_MWHI','BCUT2D_MRLOW','MinAbsPartialCharge',
-                                                'MaxAbsPartialCharge','BCUT2D_LOGPLOW','MinPartialCharge', 'BCUT2D_LOGPHI'], axis=1)
+                                                'MaxAbsPartialCharge','BCUT2D_LOGPLOW', 'BCUT2D_LOGPHI'], axis=1)
                     x_tr_rdkit= df_RDKit_2D.to_numpy()
                     # Data Standardization
                     from sklearn.preprocessing import StandardScaler
@@ -523,7 +523,7 @@ if files_option == 'MDL multiple SD file (*.sdf)':
                     df_RDKit_2D = pd.DataFrame(x_tr_rdkit,columns=header)
                     df_RDKit_2D=df_RDKit_2D.drop(['BCUT2D_MWLOW','MaxPartialCharge', 'BCUT2D_CHGLO', 'BCUT2D_CHGHI',
                                                 'BCUT2D_MRHI','BCUT2D_MWHI','BCUT2D_MRLOW','MinAbsPartialCharge',
-                                                'MaxAbsPartialCharge','BCUT2D_LOGPLOW','MinPartialCharge', 'BCUT2D_LOGPHI'], axis=1)
+                                                'MaxAbsPartialCharge','BCUT2D_LOGPLOW', 'BCUT2D_LOGPHI'], axis=1)
                     x_tr_rdkit= df_RDKit_2D.to_numpy()
                     # Data Standardization
                     from sklearn.preprocessing import StandardScaler
