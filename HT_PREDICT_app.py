@@ -27,16 +27,6 @@ from math import pi
 import zipfile
 import base64
 
-# import panel as pn
-# from panel_chemistry.widgets import JSMEEditor
-
-# pn.extension("jsme", sizing_mode="stretch_width")
-
-# smiles="N[C@@H](CCC(=O)N[C@@H](CS)C(=O)NCC(=O)O)C(=O)O"
-# editor = JSMEEditor(value=smiles, height=500, format="smiles")
-
-# editor.servable()
-
 
 ######################
 # Page Title
@@ -119,20 +109,20 @@ def rdkit_numpy_convert(f_vs):
 # HDAC3 activity models
 with zipfile.ZipFile('Models/HDAC6_SVM_MF.zip', 'r') as zip_file_svm:
     zf_svm=zip_file_svm.extract('HDAC6_SVM_MF.pkl', '.')
-load_model_SVM=joblib.load(zf_svm,'rb')
+load_model_SVM=pickle.load(open(zf_svm,'rb'))
 
 with zipfile.ZipFile('Models/HDAC6_GBR_MF.zip', 'r') as zip_file_gbr:
     zf_gbr=zip_file_gbr.extract('HDAC6_GBR_MF.pkl', '.')
-load_model_GBR=joblib.load(zf_gbr,'rb')
+load_model_GBR=pickle.load(open(zf_gbr,'rb'))
 
 # Toxicity models
 with zipfile.ZipFile('Models/Toxicity/Toxicity_SVM_RDKiT.zip', 'r') as zip_file_svm_tox:
     zf_tox=zip_file_svm_tox.extract('Toxicity_SVM_RDKiT.pkl', '.')
-load_model_SVM_tox=joblib.load(zf_tox,'rb')
+load_model_SVM_tox=pickle.load(open(zf_tox,'rb'))
 
 with zipfile.ZipFile('Models/Toxicity/Toxicity_GBR_RDKiT.zip', 'r') as zip_file_gbr_tox:
     zf_tox_gbr=zip_file_gbr_tox.extract('Toxicity_GBR_RDKiT.pkl', '.')
-load_model_GBR_tox=joblib.load(zf_tox_gbr,'rb')
+load_model_GBR_tox=pickle.load(open(zf_tox_gbr,'rb'))
 
 # load numpy array from csv file for hdac activity
 zf_hdac = zipfile.ZipFile('Models/x_tr_MF.zip') 
@@ -173,7 +163,7 @@ if files_option == 'SMILES':
         df_RDKit_2D = pd.DataFrame(x_tr_rdkit,columns=header)
         df_RDKit_2D=df_RDKit_2D.drop(['BCUT2D_MWLOW','MaxPartialCharge', 'BCUT2D_CHGLO', 'BCUT2D_CHGHI',
                                       'BCUT2D_MRHI','BCUT2D_MWHI','BCUT2D_MRLOW','MinAbsPartialCharge',
-                                       'MaxAbsPartialCharge','BCUT2D_LOGPLOW','MinPartialCharge', 'BCUT2D_LOGPHI'], axis=1)
+                                       'MaxAbsPartialCharge','BCUT2D_LOGPLOW', 'BCUT2D_LOGPHI'], axis=1)
         x_tr_rdkit= df_RDKit_2D.to_numpy()
         # Data Standardization
         from sklearn.preprocessing import StandardScaler
@@ -360,7 +350,7 @@ if files_option == '*CSV file containing SMILES':
                     df_RDKit_2D = pd.DataFrame(x_tr_rdkit,columns=header)
                     df_RDKit_2D=df_RDKit_2D.drop(['BCUT2D_MWLOW','MaxPartialCharge', 'BCUT2D_CHGLO', 'BCUT2D_CHGHI',
                                                 'BCUT2D_MRHI','BCUT2D_MWHI','BCUT2D_MRLOW','MinAbsPartialCharge',
-                                                'MaxAbsPartialCharge','BCUT2D_LOGPLOW','MinPartialCharge', 'BCUT2D_LOGPHI'], axis=1)
+                                                'MaxAbsPartialCharge','BCUT2D_LOGPLOW', 'BCUT2D_LOGPHI'], axis=1)
                     x_tr_rdkit= df_RDKit_2D.to_numpy()
                     # Data Standardization
                     from sklearn.preprocessing import StandardScaler
@@ -533,7 +523,7 @@ if files_option == 'MDL multiple SD file (*.sdf)':
                     df_RDKit_2D = pd.DataFrame(x_tr_rdkit,columns=header)
                     df_RDKit_2D=df_RDKit_2D.drop(['BCUT2D_MWLOW','MaxPartialCharge', 'BCUT2D_CHGLO', 'BCUT2D_CHGHI',
                                                 'BCUT2D_MRHI','BCUT2D_MWHI','BCUT2D_MRLOW','MinAbsPartialCharge',
-                                                'MaxAbsPartialCharge','BCUT2D_LOGPLOW','MinPartialCharge', 'BCUT2D_LOGPHI'], axis=1)
+                                                'MaxAbsPartialCharge','BCUT2D_LOGPLOW', 'BCUT2D_LOGPHI'], axis=1)
                     x_tr_rdkit= df_RDKit_2D.to_numpy()
                     # Data Standardization
                     from sklearn.preprocessing import StandardScaler
