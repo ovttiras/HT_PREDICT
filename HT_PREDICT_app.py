@@ -1,8 +1,6 @@
 ######################
 # Import libraries
 ######################
-import matplotlib.pyplot as plt
-from matplotlib import cm
 from rdkit.Chem.Draw import SimilarityMaps
 from numpy import loadtxt
 import numpy as np
